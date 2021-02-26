@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "future": "cpp"
+    },
+    "jupyter.jupyterServerType": "local"
+}
