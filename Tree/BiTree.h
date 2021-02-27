@@ -1,6 +1,5 @@
 #ifndef BITREE_H_
 #define BITREE_H_ 1
-//  顺序存储结构存储二叉树
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,9 +14,11 @@ using namespace std;
 typedef int Status;
 typedef int TElemType;
 
+//  顺序存储结构存储二叉树
 #define MAX_TREE_SIZE 100
 typedef TElemType SqBiTree[MAX_TREE_SIZE];
 
+//  链式结构存储二叉树
 typedef struct BiTNode
 {
     TElemType data;
@@ -88,14 +89,18 @@ Status InOrderTraverseNoRecursion1(BiTree T, Status (*visit)(TElemType e))
         {
             S.push(p->lchild);
         }
+
+        //  消除null
         p = S.top();
         S.pop();
+
         if (!S.empty())
         {
             p = S.top();
             S.pop();
             if (!visit(p->data))
                 return ERROR;
+            S.push(p->rchild);
         }
     }
     return OK;
@@ -124,14 +129,89 @@ Status InOrderTraverseNoRecursion2(BiTree T, Status (*visit)(TElemType e))
     return OK;
 }
 
+//  先序遍历非递归
+Status PreOrderTraverseNoRecursion(BiTree T, Status (*visit)(TElemType e))
+{
+    stack<BiTree> S;
+    BiTree p = T;
+    if (p)
+        S.push(p);
+    while (!S.empty())
+    {
+        p = S.top();
+        S.pop();
+        if (!visit(p->data))
+            return ERROR;
+        if (p->rchild)
+            S.push(p->rchild);
+        if (p->lchild)
+            S.push(p->lchild);
+    }
+    return OK;
+}
+
+typedef enum
+{
+    left,
+    right
+} Tag;
+
+typedef struct
+{
+    BiTree p;
+    Tag tag;
+} TagNode;
+//  后序遍历非递归
+Status PostOrderTraverseNoRecursion(BiTree T, Status (*visit)(TElemType e))
+{
+    BiTree p = T;
+    TagNode temp = {p, left};
+    stack<TagNode> S;
+    S.push(temp);
+    while (!S.empty())
+    {
+        temp = S.top();
+        while (temp.p)
+        {
+            S.push({p->lchild, left});
+            temp = S.top();
+        }
+
+        if (temp.tag == left)
+        {
+            S.pop();
+            if (temp.p && !visit(temp.p->data))
+                return ERROR;
+            S.push({S.top().p->rchild, right});
+        }
+        else if (temp.tag == right)
+        {
+            while (temp.tag == right && !S.empty())
+            {
+                if (temp.p && !visit(temp.p->data))
+                    return ERROR;
+                S.pop();
+                temp = S.top();
+            }
+            if (!visit(temp.p->data)) return ERROR;
+            S.pop();
+            if (S.empty()) continue;
+            S.push({S.top().p->rchild, right});
+        }
+    }
+    return OK;
+}
+
 //  先序次序输入二叉树节点的值
 Status CreateBiTree(BiTree &T)
 {
     char ch = getchar();
-    if (ch == ' ') T = nullptr;
+    if (ch == ' ')
+        T = nullptr;
     else
     {
-        if (!(T = (BiTree)malloc(sizeof(*T)))) exit(OVERFLOW);
+        if (!(T = (BiTree)malloc(sizeof(*T))))
+            exit(OVERFLOW);
         T->data = ch;
         CreateBiTree(T->lchild);
         CreateBiTree(T->rchild);
@@ -139,29 +219,35 @@ Status CreateBiTree(BiTree &T)
     return OK;
 }
 
-
 //  线索二叉树
-typedef enum PointerTag {Link, Thread};     //  线索还是指针
+typedef enum PointerTag
+{
+    Link,
+    Thread
+}; //  线索还是指针
 typedef struct BiThrNode
 {
     TElemType data;
-    struct BiThrNode * lchild, * rchild;    //  左右孩子指针
-    PointerTag LTag, RTag;                  //  左右标志
-}BiThrNode, * BiThrTree;
+    struct BiThrNode *lchild, *rchild; //  左右孩子指针
+    PointerTag LTag, RTag;             //  左右标志
+} BiThrNode, *BiThrTree;
 
 //  设立头结点，lchild指向根节点，rchild指向中序遍历最后一个节点
 //  中序遍历第一个结点lchild指向头结点，中序遍历最后一个结点rchild指向头结点
 Status InOrderTraverse_Thr(BiThrTree T, Status (*visit)(TElemType e))
 {
-    BiThrTree p = T->lchild;    //  p指向根结点
+    BiThrTree p = T->lchild; //  p指向根结点
     while (p != T)
     {
-        while (p->LTag == Link) p = p->lchild;
-        if (!visit(p->data)) return ERROR;
+        while (p->LTag == Link)
+            p = p->lchild;
+        if (!visit(p->data))
+            return ERROR;
         while (p->RTag == Thread && p->rchild != T)
         {
             p = p->rchild;
-            if (!visit(p->data)) return ERROR;
+            if (!visit(p->data))
+                return ERROR;
         }
         p = p->rchild;
     }
@@ -193,11 +279,13 @@ void InThreading(BiThrTree p)
 //  中序遍历二叉树T，并将其中序线索化，Thrt指向头结点
 Status InOrderThreading(BiThrTree &Thrt, BiThrTree T)
 {
-    if (!(Thrt = (BiThrTree)malloc(sizeof(*Thrt)))) exit(OVERFLOW);
+    if (!(Thrt = (BiThrTree)malloc(sizeof(*Thrt))))
+        exit(OVERFLOW);
     Thrt->LTag = Link;
     Thrt->RTag = Thread;
     Thrt->rchild = Thrt;
-    if (!T) Thrt->lchild = Thrt;
+    if (!T)
+        Thrt->lchild = Thrt;
     else
     {
         Thrt->lchild = T;
