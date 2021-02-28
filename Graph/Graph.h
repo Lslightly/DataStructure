@@ -197,9 +197,10 @@ Status InitALGraph(ALGraph &G)
         G.vertices[i].data = i;
         cin >> G.vertices[i].firstarc->adjvex;
         G.vertices[i].firstarc->nextarc = nullptr;
-        if (num_arcs == 1) continue;
+        if (num_arcs == 1)
+            continue;
         ArcNode *p = G.vertices[i].firstarc;
-        for (int j = 0; j < num_arcs-1; j++)
+        for (int j = 0; j < num_arcs - 1; j++)
         {
             p->nextarc = (ArcNode *)malloc(sizeof(ArcNode));
             cin >> p->adjvex;
@@ -207,5 +208,116 @@ Status InitALGraph(ALGraph &G)
         }
     }
     return OK;
+}
+
+//  定位节点，若存在，返回在adjlist中的下标，-1表示没有找到
+int LocateVex(ALGraph G, VertexType data)
+{
+    for (int i = 0; i < G.vexnum; i++)
+    {
+        if (G.vertices[i].data == data) return i;
+    }
+    return -1;
+}
+
+Status InsertVex(ALGraph &G, VertexType v);
+
+Status InsertArc(ALGraph &G, VertexType v, VertexType w);
+
+Status DeleteVex(ALGraph &G, VertexType v);
+
+Status DeleteArc(ALGraph &G, VertexType v, VertexType w);
+
+Status InsertVex(ALGraph &G, VertexType v)
+{
+    G.vertices[G.vexnum].data = v;
+    G.vertices[G.vexnum].firstarc = nullptr;
+    G.vexnum++;
+    return OK;
+}
+
+Status InsertInTheEnd(ALGraph &G, int v_i, int w_i)
+{
+    ArcNode *p = G.vertices[v_i].firstarc;
+    while (p && p->nextarc)
+        p = p->nextarc;
+    if (p)
+    {
+        p->nextarc = (ArcNode *)malloc(sizeof(ArcNode));
+        p->nextarc->adjvex = w_i;
+        p->nextarc->nextarc = nullptr;
+    }
+    else
+    {
+        G.vertices[v_i].firstarc = (ArcNode *)malloc(sizeof(ArcNode));
+        G.vertices[v_i].firstarc->adjvex = w_i;
+        G.vertices[v_i].firstarc->nextarc = nullptr;
+    }
+    return OK;
+}
+
+Status InsertArc(ALGraph &G, VertexType v, VertexType w)
+{
+    int v_i = LocateVex(G, v);
+    int w_i = LocateVex(G, w);
+    InsertArc(G, v_i, w_i);
+    if (G.kind == UDG || G.kind == UDN)
+        InsertArc(G, w_i, v_i);
+    return OK;
+}
+
+Status DeleteArcDG(ALGraph &G, int v_i, int w_i)
+{
+    if (!G.vertices[v_i].firstarc)
+        return FALSE;
+    ArcNode *p = G.vertices[v_i].firstarc;
+    if (p->adjvex == w_i)
+    {
+        free(p);
+        G.vertices[v_i].firstarc = nullptr;
+        return TRUE;
+    }
+    else
+    {
+        ArcNode *pre_p = p;
+        p = p->nextarc;
+        while (p && p->adjvex != w_i)
+        {
+            p = p->nextarc;
+            pre_p = pre_p->nextarc;
+        }
+        if (!p)
+            return FALSE;
+        else
+        {
+            pre_p->nextarc = p->nextarc;
+            free(p);
+            return TRUE;
+        }
+    }
+}
+
+Status DeleteArc(ALGraph &G, VertexType v, VertexType w)
+{
+    int v_i = LocateVex(G, v);
+    int w_i = LocateVex(G, w);
+    if (DeleteArcDG(G, v_i, w_i) == FALSE)
+        return FALSE;
+    if (G.kind == UDG || G.kind == UDN)
+        if (DeleteArcDG(G, w_i, v_i) == FALSE)
+            return FALSE;
+    return TRUE;
+}
+
+Status DeleteVex(ALGraph &G, VertexType v)
+{
+    int v_i = LocateVex(G, v_i);
+    ArcNode *p = G.vertices[v_i].firstarc;
+    while (p)
+    {
+        DeleteArc(G, v_i, p->adjvex);
+        p = p->nextarc;
+    }
+    return TRUE;
 }
 #endif
