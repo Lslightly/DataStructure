@@ -15,7 +15,7 @@ using namespace std;
 #define OVERFLOW -2
 typedef int Status;
 typedef int VRType;
-typedef char InfoType;
+typedef int InfoType;
 typedef int VertexType;
 
 #define INFINITY __INT32_MAX__
