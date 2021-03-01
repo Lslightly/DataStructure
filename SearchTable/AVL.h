@@ -34,6 +34,7 @@ typedef struct BSTNode
 {
     SElemType data;
     int bf;
+    int lsize;
     struct BSTNode *lchild, *rchild;
 }BSTNode, *BSTree;
 
