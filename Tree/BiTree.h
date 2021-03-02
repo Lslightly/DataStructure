@@ -91,7 +91,6 @@ Status InOrderTraverseNoRecursion1(BiTree T, Status (*visit)(TElemType e))
         }
 
         //  消除null
-        p = S.top();
         S.pop();
 
         if (!S.empty())
@@ -173,30 +172,56 @@ Status PostOrderTraverseNoRecursion(BiTree T, Status (*visit)(TElemType e))
         temp = S.top();
         while (temp.p)
         {
-            S.push({p->lchild, left});
+            S.push({temp.p->lchild, left});
             temp = S.top();
         }
 
+        S.pop();
+        temp = S.top();
+
         if (temp.tag == left)
         {
-            S.pop();
-            if (temp.p && !visit(temp.p->data))
-                return ERROR;
-            S.push({S.top().p->rchild, right});
+            temp.tag = right;
+            S.push({temp.p->rchild, left});
         }
         else if (temp.tag == right)
         {
-            while (temp.tag == right && !S.empty())
+            if (temp.p && !visit(temp.p->data))
+                return ERROR;
+            S.pop();
+            S.push({nullptr, right});
+        }
+    }
+    return OK;
+}
+
+Status PostOrderTraverseNoRecursion2(BiTree T, Status (*visit)(TElemType data))
+{
+    stack<TagNode> S;
+    BiTree p = T;
+    TagNode top;
+    while (p || !S.empty())
+    {
+        if (p)
+        {
+            S.push({p, left});
+            p = p->lchild;
+        }
+        else
+        {
+            top = S.top();
+            if (top.tag == left)
             {
-                if (temp.p && !visit(temp.p->data))
+                top.tag = right;
+                p = top.p->rchild;
+            }
+            else
+            {
+                if (!visit(top.p->data))
                     return ERROR;
                 S.pop();
-                temp = S.top();
+                p = nullptr;
             }
-            if (!visit(temp.p->data)) return ERROR;
-            S.pop();
-            if (S.empty()) continue;
-            S.push({S.top().p->rchild, right});
         }
     }
     return OK;
